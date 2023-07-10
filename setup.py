@@ -35,5 +35,6 @@ setup(
     install_requires=[  # Add your Python dependencies here
         "numpy",
         "pandas",
+        "scipy",
     ],
 )
