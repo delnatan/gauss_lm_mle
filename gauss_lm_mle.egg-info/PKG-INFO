@@ -1,0 +1,4 @@
+Metadata-Version: 2.1
+Name: gauss-lm-mle
+Version: 0.1.0
+Summary: MLE Gaussian fitting with Poisson deviates
