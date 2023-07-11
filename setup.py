@@ -28,7 +28,7 @@ lm_mle_de_module = Extension(
 # Setup
 setup(
     name="gauss-lm-mle",
-    version="0.1.1b",
+    version="0.1.2",
     description="MLE Gaussian fitting with Poisson deviates",
     ext_modules=[lm_mle_de_module],
     packages=["gauss_lm_mle"],
