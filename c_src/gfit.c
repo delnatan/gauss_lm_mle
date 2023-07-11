@@ -414,7 +414,7 @@ void fit_gaussian(
     results[n * nresults + 3] = (double) yc + pars[1]; // yc
     results[n * nresults + 4] = pars[2]; // sigma
     results[n * nresults + 5] = info[5]; // niter
-    results[n * nresults + 6] = info[6]; // norm2 of error
+    results[n * nresults + 6] = info[1]; // norm2 of error
    
   }
 
