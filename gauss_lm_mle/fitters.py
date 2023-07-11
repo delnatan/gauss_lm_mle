@@ -81,6 +81,16 @@ def mle_rotated_gaussian(
 
     dfres["niter"] = dfres["niter"].astype(int)
 
+    # throw away molecules that are out of bounds
+    s = boxsize // 2
+    within_bounds = (
+        (dfres["x"] < image.shape[1] - s) &
+        (dfres["y"] < image.shape[0] - s) &
+        (dfres["x"] > s) &
+        (dfres["y"] > s)
+    )
+    dfres = dfres.loc[within_bounds]
+
     return dfres
 
 
@@ -153,5 +163,15 @@ def mle_gaussian(
     )
 
     dfres["niter"] = dfres["niter"].astype(int)
+
+    # throw away molecules that are out of bounds
+    s = boxsize // 2
+    within_bounds = (
+        (dfres["x"] < image.shape[1] - s) &
+        (dfres["y"] < image.shape[0] - s) &
+        (dfres["x"] > s) &
+        (dfres["y"] > s)
+    )
+    dfres = dfres.loc[within_bounds]
 
     return dfres
