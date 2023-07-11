@@ -6,9 +6,15 @@ import numpy as np
 
 def load_library():
     """handle system-specific C-library loading"""
-    version_info = sys.version_info
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    lib_filename = f"./lm_mle_de.cpython-{version_info.major}{version_info.minor}-darwin.so"
+    suffix = f"{sys.implementation.cache_tag}-{sys.implementation._multiarch}"
+
+    if sys.platform == "darwin" or sys.platform == "linux":
+        extension = "so"
+    else:
+        extension = "dll"
+
+    lib_filename = f"./lm_mle_de.{suffix}.{extension}"
     lib_path = os.path.join(dir_path, lib_filename)
 
     try:
@@ -43,5 +49,5 @@ def load_library():
     ]
 
     lib.fit_gaussian.restype = None
-    
+
     return lib
