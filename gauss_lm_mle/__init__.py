@@ -1,2 +1,2 @@
-from .fitters import mle_rotated_gaussian
+from .fitters import mle_gaussian, mle_rotated_gaussian
 from . import utils

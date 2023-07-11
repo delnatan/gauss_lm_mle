@@ -402,7 +402,7 @@ void fit_gaussian(
     double pars[5] = {xc0, yc0, sigma0, roi_max_val - roi_min_val, roi_min_val};
     double info[LM_INFO_SZ];
 
-    dlevmar_mle_der(&rotated_gaussian_f, &rotated_gaussian_df,
+    dlevmar_mle_der(&gaussian_f, &gaussian_df,
 		    pars, roi, npars, ndata, itermax, NULL, info,
 		    NULL, NULL, &coords, 0);
 
