@@ -51,7 +51,7 @@ void test_rotated_gaussian_f() {
 
 }
 
-void test_jacobian() {
+void test_rotated_gauss_jacobian() {
   int boxsize = 11;
   coord_data data = meshgrid2d(boxsize);
   int m, n;
@@ -92,7 +92,44 @@ void test_jacobian() {
   
 }
 
-void test_gaussian_fit() {
+void test_gauss_jacobian() {
+  int boxsize = 11;
+  coord_data data = meshgrid2d(boxsize);
+  int m, n;
+
+  m = 5;
+  n = boxsize * boxsize;
+
+  /*
+    p[0] is xc
+    p[1] is yc
+    p[2] is sigma
+    p[3] is A
+    p[4] is bg
+   */
+
+  double A = 100;
+  double bg = 10;
+  double sigma = 1.5;
+  double p[5] = {
+    0.0, 0.0, sigma, A, bg
+  };
+
+  double* err = malloc(sizeof(double)* data.num_coords);
+  
+  dlevmar_chkjac(&gaussian_f, &gaussian_df, p, m, n, &data, err);
+
+  for (int i=0; i < n; i++) {
+    printf("%8.4f ", err[i]);
+  }
+  
+  free(err);
+  free_coord_data(&data);
+  
+}
+
+
+void test_rotated_gaussian_fit() {
 
   int m = 7;
   int n = 121;
@@ -137,7 +174,14 @@ void test_gaussian_fit() {
 
 int main() {
   /* test_rotated_gaussian_f(); */
-  /* test_jacobian(); */
-  test_gaussian_fit();
+  printf("Testing gaussian jacobian\n");
+  test_gauss_jacobian();
+  printf("\n\n");
+  printf("Testing rotated gaussian jacobian\n");
+  test_rotated_gauss_jacobian();
+  printf("\n\n");
+  printf("Testing rotated gaussian fit\n");
+  test_rotated_gaussian_fit();
+  printf("\n\n");
 }
   

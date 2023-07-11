@@ -28,10 +28,11 @@ lm_mle_de_module = Extension(
 # Setup
 setup(
     name="gauss-lm-mle",
-    version="0.1.0",
+    version="0.1.1b",
     description="MLE Gaussian fitting with Poisson deviates",
     ext_modules=[lm_mle_de_module],
     packages=["gauss_lm_mle"],
+    package_data={"gauss_lm_mle": ["c_src/*.h"]},
     install_requires=[  # Add your Python dependencies here
         "numpy",
         "pandas",

@@ -15,10 +15,18 @@ void rotated_gaussian_f(double* p, double* f, int m, int n, void* adata);
 
 void rotated_gaussian_df(double* p, double* jac, int m, int n, void* adata);
 
+void gaussian_f(double* p, double* f, int m, int n, void* adata);
+
+void gaussian_df(double* p, double* jac, int m, int n, void* adata);
+
 void print_rois(double* image, int* ylocs, int *xlocs, int img_height,
 		int img_width, int nlocs, int boxsize);
 
-void fit_peaks(double* image, int* ylocs, int *xlocs, int img_height,
+void fit_rotated_gaussian(double* image, int* ylocs, int *xlocs, int img_height,
+	       int img_width, int nlocs, int boxsize, int itermax,
+	       double* results);
+
+void fit_gaussian(double* image, int* ylocs, int *xlocs, int img_height,
 	       int img_width, int nlocs, int boxsize, int itermax,
 	       double* results);
 

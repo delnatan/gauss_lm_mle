@@ -16,7 +16,7 @@ def load_library():
     except OSError as e:
         raise OSError(f"Failed to load shared library {lib_path}.") from e
 
-    lib.fit_peaks.argtypes = [
+    lib.fit_rotated_gaussian.argtypes = [
         np.ctypeslib.ndpointer(dtype=np.double, ndim=2, flags="C_CONTIGUOUS"),
         np.ctypeslib.ndpointer(dtype=np.intc, ndim=1, flags="C_CONTIGUOUS"),
         np.ctypeslib.ndpointer(dtype=np.intc, ndim=1, flags="C_CONTIGUOUS"),
@@ -28,6 +28,20 @@ def load_library():
         np.ctypeslib.ndpointer(dtype=np.double, ndim=2, flags="C_CONTIGUOUS"),
     ]
 
-    lib.fit_peaks.restype = None
+    lib.fit_rotated_gaussian.restype = None
 
+    lib.fit_gaussian.argtypes = [
+        np.ctypeslib.ndpointer(dtype=np.double, ndim=2, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.intc, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.intc, ndim=1, flags="C_CONTIGUOUS"),
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        np.ctypeslib.ndpointer(dtype=np.double, ndim=2, flags="C_CONTIGUOUS"),
+    ]
+
+    lib.fit_gaussian.restype = None
+    
     return lib

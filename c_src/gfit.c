@@ -77,6 +77,62 @@ void rotated_gaussian_df(double* p, double* jac, int m, int n, void* adata) {
     
 }
 
+void gaussian_f(double* p, double* f, int m, int n, void* adata) {
+  double xc, yc, sigma, A, bg;
+  double xarg, yarg, wrk;
+
+  // 'adata' will be a pointer to coord_data
+  // cast to a pointer to `coord_data` to access the struct
+  coord_data* coord = (coord_data*) adata;
+  xc	= p[0];
+  yc	= p[1];
+  sigma = p[2];
+  A	= p[3];
+  bg	= p[4];
+
+  double sigma2 = sigma * sigma;
+  
+  for (int i=0; i<n; i++) {
+    xarg = coord->x[i] - xc;
+    yarg = coord->y[i] - yc;
+    wrk = (xarg*xarg)/(2*sigma2) + (yarg*yarg)/(2*sigma2);
+    f[i] = A * exp(-wrk) + bg;
+  }
+}
+
+// jacobian for symmetric gaussian function
+void gaussian_df(double* p, double* jac, int m, int n, void* adata) {
+  double xc, yc, sigma, A;
+  double xarg, yarg, wrk;
+  coord_data* coord = (coord_data*) adata;
+  xc	= p[0];
+  yc	= p[1];
+  sigma = p[2];
+  A	= p[3];
+
+  double sigma2 = sigma * sigma;
+  double sigma3 = sigma2 * sigma;
+  
+  for (int i=0; i<n; i++) {
+    xarg = coord->x[i] - xc;
+    yarg = coord->y[i] - yc;
+    wrk  = (xarg*xarg)/(2*sigma2) + (yarg*yarg)/(2*sigma2);
+
+    //partial xc
+    jac[i * m] = A * xarg * exp(-wrk) / sigma2;
+    //partial yc
+    jac[i * m + 1] = A * yarg * exp(-wrk) / sigma2;
+    //partial sigma
+    jac[i * m + 2] = A * exp(-wrk) * ((xarg*xarg)/sigma3 + (yarg*yarg)/sigma3);
+    //partial A
+    jac[i * m + 3] = exp(-wrk);
+    //partial bg
+    jac[i * m + 4] = 1.0;
+  }
+  
+}
+
+
 /*
   Function definition for LM minimizer
 
@@ -166,7 +222,7 @@ void free_results(double* results) {
 }
 
 
-void fit_peaks(
+void fit_rotated_gaussian(
 	       double* image, int* ylocs, int *xlocs, 
 	       int img_height, int img_width, int nlocs, int boxsize, int itermax,
 	       double* results
@@ -237,12 +293,8 @@ void fit_peaks(
     
     // at the moment start with the same parameters for all
     // todo: get better estimate with first/second moments
-    double pars[7] = {a0, 1e-4, c0, xc0, yc0, roi_max_val, roi_min_val};
+    double pars[7] = {a0, 1e-4, c0, xc0, yc0, roi_max_val - roi_min_val, roi_min_val};
     double info[LM_INFO_SZ];
-
-    // for guess
-    pars[5] = roi_max_val - roi_min_val;
-    pars[6] = roi_min_val;
 
     dlevmar_mle_der(&rotated_gaussian_f, &rotated_gaussian_df,
 		    pars, roi, npars, ndata, itermax, NULL, info,
@@ -273,6 +325,97 @@ void fit_peaks(
     results[n * nresults + 8] = info[5]; // number of iterations
     results[n * nresults + 9] = info[1]; // norm2 of error
     
+  }
+
+  free(roi);
+  free_coord_data(&coords);
+  
+}
+
+
+void fit_gaussian(
+		   double* image, int* ylocs, int *xlocs, 
+		   int img_height, int img_width, int nlocs, int boxsize, int itermax,
+		   double* results
+		   ) 
+{
+  /*
+    Perform Gaussian fitting to localize to single-molecule intensities
+    using MLE.
+
+   */
+  double roi_min_val, roi_max_val, pixval;
+
+  double sigma0 = 1.4;
+  
+  int s = boxsize / 2;
+  
+  double* roi = malloc(boxsize * boxsize * sizeof(double));
+
+  int npars = 5;
+  int nresults = 7;
+  int ndata = boxsize * boxsize;
+
+  // define box coordinates
+  coord_data coords = meshgrid2d(boxsize);
+  
+  // loop through each maxima
+  for (int n=0; n < nlocs; n++) {
+    // extract ROI from image
+    int yc = ylocs[n];
+    int xc = xlocs[n];
+    
+    // copy pixels of ROI into 'roi'
+    for (int i = -s; i <= s; i++) {
+      for (int j= -s; j <= s; j++) {
+	pixval = image[(yc + i) * img_width + (xc + j)];
+	roi[(i + s) * boxsize + (j + s)] = pixval;
+      }
+    }
+
+    // compute initial estimates
+    // Amplitude and background is initially max(roi) and min(roi)
+    roi_min_val = roi[0];
+    roi_max_val = roi[0];
+
+    for (int i = 0; i < boxsize; i++) {
+      for (int j= 0; j < boxsize; j++) {
+	pixval = roi[i * boxsize + j];
+	if (pixval < roi_min_val) roi_min_val = pixval;
+	if (pixval > roi_max_val) roi_max_val = pixval;
+      }
+    }
+
+    double weight = 0.0;
+    double weighted_sum_x = 0.0;
+    double weighted_sum_y = 0.0;
+    // compute first moment to estimate x,y position
+    for (int i = 0; i < coords.num_coords; i++) {
+      weight += (roi[i] - roi_min_val);
+      weighted_sum_x += coords.x[i] * (roi[i] - roi_min_val);
+      weighted_sum_y += coords.y[i] * (roi[i] - roi_min_val);
+    }
+    double xc0 = weighted_sum_x / weight;
+    double yc0 = weighted_sum_y / weight;
+
+    // at the moment start with the same parameters for all
+    double pars[5] = {xc0, yc0, sigma0, roi_max_val - roi_min_val, roi_min_val};
+    double info[LM_INFO_SZ];
+
+    dlevmar_mle_der(&rotated_gaussian_f, &rotated_gaussian_df,
+		    pars, roi, npars, ndata, itermax, NULL, info,
+		    NULL, NULL, &coords, 0);
+
+    // populate results
+    // A, bg, xc, yc, sigma_x, sigma_y, theta, asymm; niter, 
+    results[n * nresults] = pars[3]; // Amplitude
+    results[n * nresults + 1] = pars[4]; // background
+    results[n * nresults + 2] = (double) xc + pars[0]; // xc
+    results[n * nresults + 3] = (double) yc + pars[1]; // yc
+    results[n * nresults + 4] = pars[2]; // sigma
+    results[n * nresults + 5] = info[5]; // niter
+    results[n * nresults + 6] = info[6]; // norm2 of error
+   
   }
 
   free(roi);
