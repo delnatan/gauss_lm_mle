@@ -113,9 +113,7 @@ def mle_gaussian(
         'A' - Amplitude of the Gaussian.
         'bg' - Background offset.
         'x' and 'y' - Coordinates of the Gaussian's peak.
-        'sx' and 'sy' - Standard deviations of the Gaussian along the x and y axes, respectively.
-        'theta' - Rotation angle of the Gaussian (in radians).
-        'asymmetry' - Asymmetry parameter of the Gaussian.
+        'sigma' - Standard deviations of the Gaussian.
         'niter' - The number of iterations performed by the fitting algorithm.
         'norm2_error' - The squared error norm of the fit.
     """
